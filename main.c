@@ -6,6 +6,11 @@
 /* name of the sqlite database */
 #define SQLITEDBNAME "/home/raphael/.local/share/baloo/file/fileMap.sqlite3"
 
+struct idArray {
+    unsigned int * id;
+    unsigned int counter;
+};
+
 static int callback (void *user_data, int tuplesCount, char **argv, char **azColName)
 {
     int i;
@@ -14,6 +19,18 @@ static int callback (void *user_data, int tuplesCount, char **argv, char **azCol
         //printf("%s = %s\n", azColName[i], argv[i]);
     }
     //printf ("\n");
+    return 0;
+}
+
+static int fillIdArray (void *idsArr, int colCount, char **argv, char **azColName)
+{
+    //printf("id = %s\n", argv[0]);
+    int pos = ((struct idArray *)idsArr)->counter;
+    unsigned int * id = ((struct idArray *)idsArr)->id;
+
+    id[pos] = atoi(argv[0]);
+
+    (((struct idArray *)idsArr)->counter)++;
     return 0;
 }
 
@@ -59,14 +76,27 @@ int main (int argc, char **argv)
 
     fprintf(stdout, "DB contains %d tuples \n", *tuplesCount);
 
+    /* declare the array of ids */
+    struct idArray idsArr;
+    idsArr.id = malloc(sizeof(unsigned int) * *tuplesCount);
+    idsArr.counter = 0;
+
+    /* fill the array of ids*/
+    sqlite3_exec(dco,
+            "SELECT id FROM files;",
+            fillIdArray, &idsArr, NULL);
+
+    /* bench */
     for (int i = 1; i < max; ++i )
     {
         r = rand()%(*tuplesCount);
+        unsigned int id = idsArr.id[r];
+
         char baseReq[34] = "SELECT * FROM files WHERE id = %d";
 
         // i uses 10 because max value of unsigned int needs 10 numbers to be show in string
         char * req = (char *) malloc((sizeof(char) * 33) + (sizeof(char)*10)); /* TODO fixme */
-        sprintf(req, baseReq, r);
+        sprintf(req, baseReq, id);
 
         /* request a pseudo-random tuple from the database */
         sqlite3_exec(dco, req, callback, tuplesCount, NULL);
@@ -75,6 +105,7 @@ int main (int argc, char **argv)
         free(req);
     }
 
+    free(idsArr.id);
     free(tuplesCount);
     exit(EXIT_SUCCESS);
 }

@@ -14,7 +14,7 @@ static int callback (void *user_data, int tuplesCount, char **argv, char **azCol
         printf("%s = %s\n", azColName[i], argv[i]);
     }
     printf ("\n");
-    exit(EXIT_SUCCESS);
+    return 0;
 }
 
 static int count (void *user_data, int tuplesCount, char **argv, char **azColName)
@@ -62,6 +62,9 @@ int main (int argc, char **argv)
     /* request a pseudo-random tuple from the database */
     sqlite3_exec(dco, req, callback, tuplesCount, NULL);
     /* TODO don't work every time because some ID have been deleted */
+
+    free(tuplesCount);
+    free(req);
 
     exit(EXIT_SUCCESS);
 }

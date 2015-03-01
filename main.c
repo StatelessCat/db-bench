@@ -100,7 +100,6 @@ int main (int argc, char **argv)
 
         /* request a pseudo-random tuple from the database */
         sqlite3_exec(dco, req, callback, tuplesCount, NULL);
-        /* TODO don't work every time because some ID have been deleted */
 
         free(req);
     }

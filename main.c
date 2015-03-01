@@ -11,9 +11,9 @@ static int callback (void *user_data, int tuplesCount, char **argv, char **azCol
     int i;
     for (i = 0; i < tuplesCount; ++i)
     {
-        printf("%s = %s\n", azColName[i], argv[i]);
+        //printf("%s = %s\n", azColName[i], argv[i]);
     }
-    printf ("\n");
+    //printf ("\n");
     return 0;
 }
 
@@ -26,6 +26,13 @@ static int count (void *user_data, int tuplesCount, char **argv, char **azColNam
 
 int main (int argc, char **argv)
 {
+    if (argc < 2)
+    {
+        fprintf(stderr, "Syntax : %s <itNumber>\n", argv[0]);
+        return 1;
+    }
+    int max = atoi(argv[1]);
+
     sqlite3 * dco;              /* SQLITE database connection object */
     int rc;                     /* return code */
     unsigned int * tuplesCount;
@@ -52,19 +59,22 @@ int main (int argc, char **argv)
 
     fprintf(stdout, "DB contains %d tuples \n", *tuplesCount);
 
-    r = rand()%(*tuplesCount);
-    char baseReq[34] = "SELECT * FROM files WHERE id = %d";
+    for (int i = 1; i < max; ++i )
+    {
+        r = rand()%(*tuplesCount);
+        char baseReq[34] = "SELECT * FROM files WHERE id = %d";
 
-    // i uses 10 because max value of unsigned int needs 10 numbers to be show in string
-    char * req = (char *) malloc((sizeof(char) * 33) + (sizeof(char)*10)); /* TODO fixme */
-    sprintf(req, baseReq, r);
+        // i uses 10 because max value of unsigned int needs 10 numbers to be show in string
+        char * req = (char *) malloc((sizeof(char) * 33) + (sizeof(char)*10)); /* TODO fixme */
+        sprintf(req, baseReq, r);
 
-    /* request a pseudo-random tuple from the database */
-    sqlite3_exec(dco, req, callback, tuplesCount, NULL);
-    /* TODO don't work every time because some ID have been deleted */
+        /* request a pseudo-random tuple from the database */
+        sqlite3_exec(dco, req, callback, tuplesCount, NULL);
+        /* TODO don't work every time because some ID have been deleted */
+
+        free(req);
+    }
 
     free(tuplesCount);
-    free(req);
-
     exit(EXIT_SUCCESS);
 }
